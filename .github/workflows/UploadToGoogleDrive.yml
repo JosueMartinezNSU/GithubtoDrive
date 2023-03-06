@@ -13,11 +13,6 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    - name: Set up Google credentials
-      run: echo "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}" > /tmp/google-credentials.json
-      env:
-        GOOGLE_APPLICATION_CREDENTIALS: /tmp/google-credentials.json
-
     - name: Authenticate with Google Drive API
       uses: google-github-actions/setup-gcloud@v1
       with:
@@ -27,7 +22,8 @@ jobs:
 
     - name: Create Google Drive folder
       run: |
-        gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS
+        echo ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }} > /tmp/creds.json
+        gcloud auth activate-service-account --key-file=/tmp/creds.json
         FOLDER_ID=$(gcloud drive folders list --query "name='upload'" --format "value(id)")
         if [ -z "$FOLDER_ID" ]
         then
@@ -37,7 +33,8 @@ jobs:
 
     - name: Upload files to Google Drive
       run: |
-        gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS
+        echo ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }} > /tmp/creds.json
+        gcloud auth activate-service-account --key-file=/tmp/creds.json
         for file in upload/*; do
           filename=$(basename "$file")
           gcloud drive files create --parents $FOLDER_ID "$file" --name "$filename"
