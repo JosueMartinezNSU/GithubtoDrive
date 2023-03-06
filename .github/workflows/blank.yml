@@ -31,7 +31,7 @@ jobs:
       - name: Authenticate to Google Drive
         uses: google-github-actions/auth@v1.0.0
         with:
-          credentials: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+          credentials_json: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
       
       - name: Print access token
         run: echo ${{ secrets.GDRIVE_ACCESS_TOKEN }}
