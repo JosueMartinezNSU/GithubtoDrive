@@ -13,13 +13,11 @@ jobs:
         uses: google-github-actions/setup-gcloud@v1
         with:
           project_id: githubtodrive
-          service_account_key: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
-
-      - name: Authenticate with Google Cloud
-        uses: google-github-actions/auth@v0
-        with:
-          credentials: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+        env:
+          CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
 
       - name: List files in Google Drive
         run: |
           gcloud drive files list
+        env:
+          CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
