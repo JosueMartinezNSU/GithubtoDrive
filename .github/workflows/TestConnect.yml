@@ -9,15 +9,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      - name: Authenticate with Google Cloud
+        uses: google-github-actions/auth@v0.5.2
+        with:
+          credentials: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+
       - name: Set up gcloud CLI
         uses: google-github-actions/setup-gcloud@v1
         with:
           project_id: githubtodrive
-        env:
-          CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
 
       - name: List files in Google Drive
         run: |
           gcloud drive files list
-        env:
-          CLOUDSDK_AUTH_CREDENTIAL_FILE_OVERRIDE: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
