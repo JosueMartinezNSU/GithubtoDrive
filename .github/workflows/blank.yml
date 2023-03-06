@@ -17,6 +17,10 @@ jobs:
         with:
           credentials_json: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
       
+      - name: Verify authentication to Google Drive
+        run: |
+          python -c 'from google.oauth2.credentials import Credentials; creds = Credentials.from_authorized_user_info(info=${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}); print(f"Successfully authenticated to Google Drive as {creds.valid_email}")'
+      
       - name: Upload files to Google Drive
         run: |
           cd upload
@@ -28,3 +32,7 @@ jobs:
               echo "Uploaded $file to Google Drive!"
             fi
           done
+      
+      - name: Verify upload to Google Drive
+        run: |
+          python -c 'import os; from google.oauth2.credentials import Credentials; from googleapiclient.discovery import build; creds = Credentials.from_authorized_user_info(info=${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}); drive = build("drive", "v3", credentials=creds); query = f"name=\'{os.environ['GITHUB_REPOSITORY'].split('/')[1]}\' and mimeType=\'application/vnd.google-apps.folder\' and trashed=false"; folders = drive.files().list(q=query).execute().get("files"); assert len(folders) == 1, f"Expected 1 folder, got {len(folders)}"; folder_id = folders[0]['id']; files = drive.files().list(q=f"parents=\'{folder_id}\' and trashed=false").execute().get("files"); assert len(files) > 0, "No files found in the target folder"'
