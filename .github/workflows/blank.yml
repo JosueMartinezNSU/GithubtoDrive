@@ -16,15 +16,7 @@ jobs:
         uses: google-github-actions/auth@v1
         with:
           credentials_json: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
-
-      - name: Debug: Verify authentication
-        run: |
-          python -c 'from google.oauth2.credentials import Credentials; creds = Credentials.from_authorized_user_info(info=${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}); print(f"Successfully authenticated to Google Drive as {creds.valid_email}")'
-
-      - name: Debug: Verify access token
-        run: |
-          curl -s -H "Authorization: Bearer ${{ secrets.GDRIVE_ACCESS_TOKEN }}" "https://www.googleapis.com/drive/v3/about" | jq .
-
+      
       - name: Upload files to Google Drive
         run: |
           cd upload
@@ -32,6 +24,9 @@ jobs:
             if [[ -f "$file" ]]; then
               echo "Uploading $file to Google Drive..."
               FILE_ID=$(curl -s -X POST -H "Authorization: Bearer ${{ secrets.GDRIVE_ACCESS_TOKEN }}" -H "Content-Type: application/json" -d "{\"name\":\"$file\"}" "https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable" | grep -i "location" | sed -e "s/.*=//g" | tr -d '[:space:]')
+              echo "File ID: $FILE_ID"
+              echo "File size: $(stat -c%s "$file") bytes"
+              echo "File MIME type: $(file -b --mime-type $file)"
               curl -s -X POST -L --retry 3 --retry-delay 5 --retry-max-time 120 --data-binary "@$file" -H "Content-Type: application/octet-stream" -H "Authorization: Bearer ${{ secrets.GDRIVE_ACCESS_TOKEN }}" -H "Content-Length: $(stat -c%s "$file")" -H "X-Upload-Content-Type: $(file -b --mime-type $file)" -H "X-Upload-Content-Length: $(stat -c%s "$file")" -H "Session-ID: 1" -H "Content-Range: bytes 0-$(stat -c%s "$file")/$(stat -c%s "$file")" -H "Expect: " "$FILE_ID"
               echo "Uploaded $file to Google Drive!"
             fi
