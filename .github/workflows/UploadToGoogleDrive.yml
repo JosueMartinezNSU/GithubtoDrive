@@ -14,7 +14,7 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Authenticate with Google Drive API
-      uses: google-github-actions/setup-gcloud@master
+      uses: google-github-actions/setup-gcloud@v1.10
       with:
         project_id: githubtodrive
         service_account_email: upload@githubtodrive.iam.gserviceaccount.com
