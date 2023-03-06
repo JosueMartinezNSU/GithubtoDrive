@@ -20,6 +20,14 @@ jobs:
         service_account_email: upload@githubtodrive.iam.gserviceaccount.com
         service_account_key: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
 
+    - name: Check if secrets exist
+      run: |
+        if [ -z "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}" ]
+        then
+          echo "Google Application Credentials not found. Please add them to the repository secrets."
+          exit 1
+        fi
+
     - name: Create Google Drive folder
       run: |
         echo ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }} > /tmp/creds.json
