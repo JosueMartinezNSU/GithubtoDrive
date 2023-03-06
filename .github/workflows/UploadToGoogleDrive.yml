@@ -13,6 +13,11 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
 
+    - name: Set up Google credentials
+      run: echo "${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}" > /tmp/google-credentials.json
+      env:
+        GOOGLE_APPLICATION_CREDENTIALS: /tmp/google-credentials.json
+
     - name: Authenticate with Google Drive API
       uses: google-github-actions/setup-gcloud@v1
       with:
