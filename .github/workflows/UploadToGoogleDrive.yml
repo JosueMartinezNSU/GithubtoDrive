@@ -1,0 +1,39 @@
+name: Upload to Google Drive
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:  # Add this line to enable manual triggering
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Authenticate with Google Drive API
+      uses: google-github-actions/setup-gcloud@master
+      with:
+        project_id: githubtodrive
+        service_account_email: upload@githubtodrive.iam.gserviceaccount.com
+        service_account_key: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
+
+    - name: Create Google Drive folder
+      run: |
+        gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS
+        FOLDER_ID=$(gcloud drive folders list --query "name='upload'" --format "value(id)")
+        if [ -z "$FOLDER_ID" ]
+        then
+          FOLDER_ID=$(gcloud drive folders create "upload" --format "value(id)")
+        fi
+        echo "Folder ID: $FOLDER_ID"
+
+    - name: Upload files to Google Drive
+      run: |
+        gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS
+        for file in upload/*; do
+          filename=$(basename "$file")
+          gcloud drive files create --parents $FOLDER_ID "$file" --name "$filename"
+        done
