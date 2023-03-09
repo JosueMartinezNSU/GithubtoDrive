@@ -1,0 +1,55 @@
+name: Upload to Google Drive
+
+on:
+  push:
+    paths:
+      - 'upload/**'
+
+env:
+  FOLDER_ID: 1TOEfp9KAzh5gldWkX9LdJBS_xScXOTPk
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - name: Install packages
+      run: |
+        python -m pip install --upgrade pip
+        pip install google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client
+    - name: Authenticate with Google Drive
+      id: auth
+      run: |
+        echo ${{ secrets.GOOGLE_DRIVE_CREDENTIALS }} > credentials.json
+        gcloud auth activate-service-account --key-file=credentials.json
+        gcloud config set project githubtodrive
+        gcloud auth print-access-token > access_token.txt
+    - name: Upload files to Google Drive
+      if: steps.auth.outputs.result == 'success'
+      run: |
+        for file in $(find upload -type f); do
+          # Check if file already exists in folder
+          FILENAME=$(basename -- "$file")
+          FILENAME_WITHOUT_EXT="${FILENAME%.*}"
+          EXTENSION="${FILENAME##*.}"
+          i=0
+          while true; do
+            QUERY="name='$FILENAME' and parents='${{ env.FOLDER_ID }}' and trashed = false"
+            if [ $i -gt 0 ]; then
+              QUERY="name='$FILENAME_WITHOUT_EXT-$i.$EXTENSION' and parents='${{ env.FOLDER_ID }}' and trashed = false"
+            fi
+            FILE_ID=$(python -c "import os.path; from google.oauth2.credentials import Credentials; from googleapiclient.errors import HttpError; from googleapiclient.discovery import build; creds = Credentials.from_authorized_user_info(info={{'access_token':open('access_token.txt', 'r').read()}},scopes=['https://www.googleapis.com/auth/drive']); service = build('drive', 'v3', credentials=creds); results = service.files().list(q='${QUERY}',fields='nextPageToken, files(id)').execute(); items = results.get('files', []); print(items[0]['id']) if items else print('')") || true
+            if [ -z "$FILE_ID" ]; then
+              break
+            fi
+            i=$((i+1))
+          done
+
+          # Upload file
+          python -c "import os.path; from google.oauth2.credentials import Credentials; from googleapiclient.errors import HttpError; from googleapiclient.discovery import build; creds = Credentials.from_authorized_user_info(info={{'access_token':open('access_token.txt', 'r').read()}},scopes=['https://www.googleapis.com/auth/drive']); service = build('drive', 'v3', credentials=creds); file_metadata = {'name': '$FILENAME'}; media = MediaFileUpload('$file', resumable=True); file = service.files().create(body=file_metadata, media_body=media, fields='id', supportsAllDrives=True, parents=['${{ env.FOLDER_ID }}']).execute()"
+        done
