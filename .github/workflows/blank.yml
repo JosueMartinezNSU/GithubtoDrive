@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'upload/**'
+      workflow_dispatch:
 
 env:
   FOLDER_ID: your_folder_id_here
