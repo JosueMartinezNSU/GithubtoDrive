@@ -16,6 +16,25 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
+    - name: Validate environment variables
+      run: |
+        if [ -z "${FOLDER_ID}" ]; then
+          echo "FOLDER_ID environment variable is not set. Please set it to the ID of the Google Drive folder you want to upload to."
+          exit 1
+        fi
+        if [ -z "${SERVICE_ACCOUNT_EMAIL}" ]; then
+          echo "SERVICE_ACCOUNT_EMAIL environment variable is not set. Please set it to the email address of the service account you want to use."
+          exit 1
+        fi
+        if [ -z "${SERVICE_ACCOUNT_KEY}" ]; then
+          echo "SERVICE_ACCOUNT_KEY environment variable is not set. Please set it to the private key of the service account you want to use."
+          exit 1
+        fi
+    - name: Debug environment variables
+      run: |
+        echo "FOLDER_ID=${FOLDER_ID}"
+        echo "SERVICE_ACCOUNT_EMAIL=${SERVICE_ACCOUNT_EMAIL}"
+        echo "SERVICE_ACCOUNT_KEY=${SERVICE_ACCOUNT_KEY}"
     - name: Upload to Google Drive
       uses: adityak74/google-drive-upload-git-action@v0.3
       with:
