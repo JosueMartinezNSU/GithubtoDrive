@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 env:
-  FOLDER_ID: your_folder_id_here
+  FOLDER_ID: 1TOEfp9KAzh5gldWkX9LdJBS_xScXOTPk
   SERVICE_ACCOUNT_EMAIL: ${{ secrets.SERVICE_ACCOUNT_EMAIL }}
   SERVICE_ACCOUNT_KEY: ${{ secrets.SERVICE_ACCOUNT_KEY }}
 
@@ -17,30 +17,13 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
-    - name: Validate environment variables
-      run: |
-        if [ -z "${FOLDER_ID}" ]; then
-          echo "FOLDER_ID environment variable is not set. Please set it to the ID of the Google Drive folder you want to upload to."
-          exit 1
-        fi
-        if [ -z "${SERVICE_ACCOUNT_EMAIL}" ]; then
-          echo "SERVICE_ACCOUNT_EMAIL environment variable is not set. Please set it to the email address of the service account you want to use."
-          exit 1
-        fi
-        if [ -z "${SERVICE_ACCOUNT_KEY}" ]; then
-          echo "SERVICE_ACCOUNT_KEY environment variable is not set. Please set it to the private key of the service account you want to use."
-          exit 1
-        fi
-    - name: Debug environment variables
-      run: |
-        echo "FOLDER_ID=${FOLDER_ID}"
-        echo "SERVICE_ACCOUNT_EMAIL=${SERVICE_ACCOUNT_EMAIL}"
-        echo "SERVICE_ACCOUNT_KEY=${SERVICE_ACCOUNT_KEY}"
+    - name: Input file name
+      id: filename
+      run: echo "::set-output name=filename::$(basename upload/*)"
     - name: Upload to Google Drive
       uses: adityak74/google-drive-upload-git-action@v0.3
       with:
-        src: 'upload'
-        dest: '/'
+        filename: ${{ steps.filename.outputs.filename }}
         service_account_email: ${{ env.SERVICE_ACCOUNT_EMAIL }}
         service_account_key: ${{ env.SERVICE_ACCOUNT_KEY }}
-        folder_id: ${{ env.FOLDER_ID }}
+        folderId: ${{ env.FOLDER_ID }}
